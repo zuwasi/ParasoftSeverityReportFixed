@@ -77,10 +77,10 @@ int main() {
                 XMLElement* viols = fileElem->FirstChildElement("Viols");
                 if (!viols) continue;
                 for (XMLElement* v = viols->FirstChildElement("V"); v; v = v->NextSiblingElement("V")) {
-                    const char* id = v->Attribute("id");
+                    const char* rid = v->Attribute("rid");
                     int line = v->IntAttribute("line", -1);
-                    if (id && line >= 0) {
-                        violationLocations[id].emplace_back(filePathAttr, line);
+                    if (rid && line >= 0) {
+                        violationLocations[rid].emplace_back(filePathAttr, line);
                     }
                 }
             }
@@ -103,44 +103,10 @@ int main() {
     else {
         for (XMLElement* rule = rulesList->FirstChildElement("Rule"); rule; rule = rule->NextSiblingElement("Rule")) {
             const char* id = rule->Attribute("id");
+            const char* rid = rule->Attribute("rid");
             const char* desc = rule->Attribute("desc");
             int sev = rule->IntAttribute("sev", -1);
             XMLElement* stats = rule->FirstChildElement("Stats");
             int total = stats ? stats->IntAttribute("total", 0) : 0;
 
-            if (id && desc && sev >= 0 && total > 0) {
-                RuleInfo info;
-                info.id = id;
-                info.desc = desc;
-
-                if (violationLocations.count(id)) {
-                    info.locations = violationLocations[id];
-                }
-
-                rulesBySeverity[sev].push_back(info);
-            }
-        }
-    }
-
-    ofstream html("parasoft_report_by_severity.html");
-    html << "<html><head><title>Parasoft Report by Severity</title></head><body>\n";
-    html << "<h1>Static Analysis Results Grouped by Severity</h1>\n";
-
-    for (const auto& [sev, rules] : rulesBySeverity) {
-        html << "<h2>Severity: " << severityLabel(sev) << "</h2>\n<ul>\n";
-        for (const auto& rule : rules) {
-            html << "  <li><b>" << rule.id << "</b>: " << rule.desc << "<br/>\n";
-            for (const auto& [file, line] : rule.locations) {
-                html << "    ↳ <i>" << file << ":" << line << "</i><br/>\n";
-            }
-            html << "  </li>\n";
-        }
-        html << "</ul>\n";
-    }
-
-    html << "</body></html>\n";
-    html.close();
-
-    cout << "HTML report generated as 'parasoft_report_by_severity.html'" << endl;
-    return 0;
-}
+            if (id && rid && desc &&
