@@ -109,4 +109,39 @@ int main() {
             XMLElement* stats = rule->FirstChildElement("Stats");
             int total = stats ? stats->IntAttribute("total", 0) : 0;
 
-            if (id && rid && desc &&
+            if (id && rid && desc && sev >= 0 && total > 0) {
+                RuleInfo info;
+                info.id = id;
+                info.desc = desc;
+
+                if (violationLocations.count(rid)) {
+                    info.locations = violationLocations[rid];
+                }
+
+                rulesBySeverity[sev].push_back(info);
+            }
+        }
+    }
+
+    ofstream html("parasoft_report_by_severity.html");
+    html << "<html><head><title>Parasoft Report by Severity</title></head><body>\n";
+    html << "<h1>Static Analysis Results Grouped by Severity</h1>\n";
+
+    for (const auto& [sev, rules] : rulesBySeverity) {
+        html << "<h2>Severity: " << severityLabel(sev) << "</h2>\n<ul>\n";
+        for (const auto& rule : rules) {
+            html << "  <li><b>" << rule.id << "</b>: " << rule.desc << "<br/>\n";
+            for (const auto& [file, line] : rule.locations) {
+                html << "    ↳ <i>" << file << ":" << line << "</i><br/>\n";
+            }
+            html << "  </li>\n";
+        }
+        html << "</ul>\n";
+    }
+
+    html << "</body></html>\n";
+    html.close();
+
+    cout << "HTML report generated as 'parasoft_report_by_severity.html'" << endl;
+    return 0;
+}
