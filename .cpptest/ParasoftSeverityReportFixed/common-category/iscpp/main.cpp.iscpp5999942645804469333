@@ -1,6 +1,0 @@
-fileName=C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\main.cpp
-isCpp=
-compilerOpts=-I"C:\Program Files\Parasoft\C++test for Visual Studio (x86_64)\10.7\engine\runtime\include" /ZI /W1 /Od /EHsc /RTC1 /MDd /fp:precise /Gd /GS /I"C:\Users\danie\vcpkg\installed\x64-windows\include" /I"C:\Users\danie\vcpkg\installed\x64-windows\include" /Gm- /D"_MBCS" /Zc:wchar_t /Zc:forScope /Zc:inline /WX- /nologo /FC /diagnostics:column /std:c++20 /JMC -DPARASOFT_CPPTEST -I.
-compilerId=vc_14_3-64
-workingDir=C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\
-advancedOptionsHash=0
