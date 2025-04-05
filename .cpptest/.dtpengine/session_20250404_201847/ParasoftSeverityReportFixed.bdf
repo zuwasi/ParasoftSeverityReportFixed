@@ -1,0 +1,34 @@
+------- cpptestscan v.10.7.1 (cpptesttrace) -------
+working_dir=C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\
+project_name=ParasoftSeverityReportFixed
+arg=cl.exe
+arg=-IC:\Program Files\Parasoft\C++test for Visual Studio (x86_64)\10.7\engine\runtime\include
+arg=/ZI
+arg=/W1
+arg=/Od
+arg=/EHsc
+arg=/RTC1
+arg=/MDd
+arg=/fp:precise
+arg=/Gd
+arg=/GS
+arg=/IC:\Users\danie\vcpkg\installed\x64-windows\include
+arg=/IC:\Users\danie\vcpkg\installed\x64-windows\include
+arg=/Gm-
+arg=/D_MBCS
+arg=/Zc:wchar_t
+arg=/Zc:forScope
+arg=/Zc:inline
+arg=/WX-
+arg=/nologo
+arg=/FC
+arg=/diagnostics:column
+arg=/std:c++20
+arg=/JMC
+arg=-DPARASOFT_CPPTEST
+arg=-I.
+arg=--cpptest_cpp_file
+arg=C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\main.cpp
+env+=Path=;C:\MinGW\libexec\mingw-get;$($env:Path);C:\Program Files\CMake\bin;C:\Users\danie\.cargo\bin;C:\Users\danie\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\danie\AppData\Local\Programs\Python\Python313\;C:\Perforce\Validate_24.2\bin;C:\Program Files (x86)\VMware\VMware Player\bin\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Program Files\Eclipse Foundation\jdk-8.0.302.8-hotspot\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\MinGW\msys\1.0\bin;C:\CPP_STAND_ALONE2023\cpptest;C:\Program Files (x86)\WinMerge;C:\Program Files (x86)\Windows Kits\10\Windows P;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PuTTY\;C:\Program Files\Wolfram Research\WolframScript\;C:\Program Files\Microso;C:\MinGW\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\MinGW\libexec\mingw-get;$($env:Path);C:\Program Files\CMake\bin;C:\Users\danie\.cargo\bin;C:\Users\danie\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\danie\AppData\Local\Programs\Python\Python313\;C:\Perforce\Validate_24.2\bin;C:\Program Files (x86)\VMware\VMware Player\bin\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Program Files\Eclipse Foundation\jdk-8.0.302.8-hotspot\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\MinGW\msys\1.0\bin;C:\CPP_STAND_ALONE2023\cpptest;C:\Program Files (x86)\WinMerge;C:\Program Files (x86)\Windows Kits\10\Windows P;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PuTTY\;C:\Program Files\Wolfram Research\WolframScript\;C:\Program Files\Microso;C:\MinGW\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\msys64\mingw64\bin;C:\Users\danie\AppData\Local\Microsoft\WindowsApps;C:\Users\danie\.dotnet\tools;C:\cursor\resources\app\bin;C:\Users\danie\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\Parasoft\C++test for Visual Studio (x86_64)\10.7\ptest\plugins\com.parasoft.ptest.libs.vstudio\os\win32\x86_64;C:\Program Files\Parasoft\C++test for Visual Studio (x86_64)\10.7\ptest\plugins\com.parasoft.ptest.common.vstudio;c:\program files\parasoft\c++test for visual studio (x86_64)\10.7\ptest\plugins\com.parasoft.ptest.libs.vstudio\Parasoft
+env+=INCLUDE=
+env+=LIB=

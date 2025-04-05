@@ -1,0 +1,6 @@
+Error preprocessing file "C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\main.cpp": 
+Cannot launch process: cl.exe "-IC:\Program Files\Parasoft\C++test for Visual Studio (x86_64)\10.7\engine\runtime\include" /EHsc /MDd /Gd "/IC:\Users\danie\vcpkg\installed\x64-windows\include" "/IC:\Users\danie\vcpkg\installed\x64-windows\include" /D_MBCS /Zc:wchar_t /Zc:forScope /Zc:inline /diagnostics:column /std:c++20 -DPARASOFT_CPPTEST -I. -E -nologo "-FoC:\alice\ParasoftSeverityReportFixed\.cpptest\.dtpengine\.cpptest\com.parasoft.xtest.cpp.analyzer.code\2\7\9\30c8a\0\tmp\ParaSoft.22652.41\ParaSoft.22652.18467.cpp.obj" -Tp "C:\alice\ParasoftSeverityReportFixed\ParasoftSeverityReportFixed\main.cpp" 
+The system cannot find the file specified.
+
+
+Could not preprocess source file
