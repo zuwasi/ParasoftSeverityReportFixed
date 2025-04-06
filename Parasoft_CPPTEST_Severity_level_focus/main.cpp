@@ -1,7 +1,6 @@
 ﻿
 // Parasoft Static Analysis XML Report Parser TODO add project name as the output file name
 // TODO add enumartion per project name per generated report 
-// TODO add project name in the headline of the report
 #if 0
 #define NOMINMAX
 #define XMLDocument WindowsXMLDocument
