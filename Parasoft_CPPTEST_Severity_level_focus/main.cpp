@@ -1,5 +1,4 @@
-﻿//TODO fix what it does on error analyzing faulty xml or html file 
-#define NOMINMAX
+﻿#define NOMINMAX
 #define XMLDocument WindowsXMLDocument
 
 #include <windows.h>
@@ -23,7 +22,7 @@
 using namespace tinyxml2;
 using namespace std;
 
-const char* VERSION = "1.1.4";
+const char* VERSION = "1.1.5";
 const bool DEBUG_MODE = false;
 
 const char* severityLabel(int sev) {
@@ -141,6 +140,22 @@ int main() {
                     continue;
                 }
 
+                map<string, pair<string, string>> ruleIdToDescCat;
+                XMLElement* rulesElement = codingStandardsElement->FirstChildElement("Rules");
+                if (rulesElement) {
+                    XMLElement* rulesList = rulesElement->FirstChildElement("RulesList");
+                    if (rulesList) {
+                        for (XMLElement* rule = rulesList->FirstChildElement("Rule"); rule; rule = rule->NextSiblingElement("Rule")) {
+                            const char* id = rule->Attribute("id");
+                            const char* desc = rule->Attribute("desc");
+                            const char* cat = rule->Attribute("cat");
+                            if (id) {
+                                ruleIdToDescCat[id] = { desc ? desc : "", cat ? cat : "" };
+                            }
+                        }
+                    }
+                }
+
                 XMLElement* locations = root->FirstChildElement("Locations");
                 if (locations) {
                     XMLElement* loc = locations->FirstChildElement("Loc");
@@ -160,8 +175,14 @@ int main() {
                         viol.filePath = v->Attribute("locFile") ? v->Attribute("locFile") : "";
                         viol.line = v->IntAttribute("ln", -1);
                         viol.message = v->Attribute("msg") ? v->Attribute("msg") : "";
-                        viol.category = v->Attribute("cat") ? v->Attribute("cat") : "";
-                        viol.ruleCode = v->Attribute("ruleId") ? v->Attribute("ruleId") : "";
+                        const char* ruleAttr = v->Attribute("rule");
+                        viol.ruleCode = ruleAttr ? ruleAttr : "";
+                        auto it = ruleIdToDescCat.find(viol.ruleCode);
+                        if (it != ruleIdToDescCat.end()) {
+                            viol.category = it->second.second;
+                            if (viol.message.empty())
+                                viol.message = it->second.first;
+                        }
                         viol.severity = v->IntAttribute("sev", 0);
                         violationsBySeverity[viol.severity].push_back(viol);
                         total++;
