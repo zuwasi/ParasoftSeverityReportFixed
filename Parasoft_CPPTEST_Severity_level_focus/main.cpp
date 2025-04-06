@@ -23,7 +23,7 @@
 using namespace tinyxml2;
 using namespace std;
 
-const char* VERSION = "1.1.3";
+const char* VERSION = "1.1.4";
 const bool DEBUG_MODE = false;
 
 const char* severityLabel(int sev) {
@@ -43,6 +43,7 @@ struct Violation {
     string message;
     int severity = -1;
     string category;
+    string ruleCode;
 };
 
 bool hasHtmlExtension(const string& path) {
@@ -93,21 +94,28 @@ int main() {
 
                 string line;
                 while (getline(file, line)) {
-                    size_t pathPos = line.find("<td><b>");
-                    if (pathPos != string::npos) {
-                        size_t end = line.find("</b>", pathPos);
-                        if (end != string::npos) {
-                            string path = line.substr(pathPos + 7, end - (pathPos + 7));
-                            projectPaths.push_back(path);
-                            continue;
-                        }
-                    }
                     if (line.find(".c") != string::npos || line.find(".cpp") != string::npos || line.find(".h") != string::npos) {
                         Violation v;
-                        v.filePath = line;
-                        v.line = 0;
-                        v.message = "(HTML Parsing Placeholder - real extraction needed)";
-                        v.severity = 1;
+                        size_t lineStart = line.find("gray\">") + 6;
+                        size_t lineEnd = line.find("&nbsp;", lineStart);
+                        if (lineStart != string::npos && lineEnd != string::npos) {
+                            v.line = stoi(line.substr(lineStart, lineEnd - lineStart));
+                        }
+
+                        size_t msgStart = line.find("</font>");
+                        size_t msgEnd = line.rfind("<font class=\"gray\">");
+                        if (msgStart != string::npos && msgEnd != string::npos && msgEnd > msgStart) {
+                            v.message = line.substr(msgStart + 7, msgEnd - msgStart - 7);
+                        }
+
+                        size_t ruleStart = line.rfind("gray\">");
+                        size_t ruleEnd = line.rfind("</font>");
+                        if (ruleStart != string::npos && ruleEnd != string::npos && ruleEnd > ruleStart) {
+                            v.ruleCode = line.substr(ruleStart + 6, ruleEnd - ruleStart - 6);
+                        }
+
+                        v.filePath = filePath;
+                        v.severity = 1; // Placeholder; real severity parsing from HTML can be improved
                         violationsBySeverity[v.severity].push_back(v);
                         total++;
                     }
@@ -153,6 +161,7 @@ int main() {
                         viol.line = v->IntAttribute("ln", -1);
                         viol.message = v->Attribute("msg") ? v->Attribute("msg") : "";
                         viol.category = v->Attribute("cat") ? v->Attribute("cat") : "";
+                        viol.ruleCode = v->Attribute("ruleId") ? v->Attribute("ruleId") : "";
                         viol.severity = v->IntAttribute("sev", 0);
                         violationsBySeverity[viol.severity].push_back(viol);
                         total++;
@@ -194,6 +203,7 @@ int main() {
                     html << "<div class='violation'>"
                         << "<b>Location:</b> " << v.filePath << "<br>"
                         << "<b>Line:</b> " << v.line << "<br>"
+                        << "<b>Rule:</b> " << v.ruleCode << "<br>"
                         << "<i>" << v.message << "</i></div>";
                 }
             }
