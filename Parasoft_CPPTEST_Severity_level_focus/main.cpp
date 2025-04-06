@@ -1,4 +1,5 @@
-﻿#define NOMINMAX
+﻿//TODO fix what it does on error analyzing faulty xml or html file 
+#define NOMINMAX
 #define XMLDocument WindowsXMLDocument
 
 #include <windows.h>
