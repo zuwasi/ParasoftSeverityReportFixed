@@ -22,7 +22,7 @@
 using namespace tinyxml2;
 using namespace std;
 
-const char* VERSION = "1.1.1";
+const char* VERSION = "1.1.3";
 const bool DEBUG_MODE = false;
 
 const char* severityLabel(int sev) {
@@ -56,153 +56,167 @@ int main() {
     cout << "Parasoft Static Analysis Report Parser v" << VERSION << endl;
     cout << "--------------------------------------------" << endl;
 
-    char filename[MAX_PATH] = "";
-    OPENFILENAMEA ofn;
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = nullptr;
-    ofn.lpstrFilter = "All Supported Files (*.xml;*.html)\0*.xml;*.html\0XML Files (*.xml)\0*.xml\0HTML Files (*.html)\0*.html\0";
-    ofn.lpstrFile = filename;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
-    ofn.lpstrTitle = "Select Parasoft Report (XML or HTML)";
+    string choice;
+    do {
+        try {
+            char filename[MAX_PATH] = "";
+            OPENFILENAMEA ofn;
+            ZeroMemory(&ofn, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = nullptr;
+            ofn.lpstrFilter = "All Supported Files (*.xml;*.html)\0*.xml;*.html\0XML Files (*.xml)\0*.xml\0HTML Files (*.html)\0*.html\0";
+            ofn.lpstrFile = filename;
+            ofn.nMaxFile = MAX_PATH;
+            ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+            ofn.lpstrTitle = "Select Parasoft Report (XML or HTML)";
 
-    if (!GetOpenFileNameA(&ofn)) {
-        cerr << "No file selected or dialog cancelled." << endl;
-        return 1;
-    }
+            if (!GetOpenFileNameA(&ofn)) {
+                cerr << "No file selected or dialog cancelled." << endl;
+                continue;
+            }
 
-    string filePath = filename;
-    cout << "Selected report: " << filePath << endl;
+            string filePath = filename;
+            cout << "Selected report: " << filePath << endl;
 
-    string projectName = "UnknownProject";
-    vector<string> projectPaths;
-    map<int, vector<Violation>> violationsBySeverity;
-    int total = 0;
+            string projectName = "UnknownProject";
+            vector<string> projectPaths;
+            map<int, vector<Violation>> violationsBySeverity;
+            int total = 0;
 
-    if (hasHtmlExtension(filePath)) {
-        // Improved safe HTML parsing
-        ifstream file(filePath);
-        if (!file.is_open()) {
-            cerr << "Failed to open HTML file." << endl;
-            return 1;
-        }
-
-        string line;
-        while (getline(file, line)) {
-            // Example pattern: look for lines that contain something like: file:line followed by message
-            size_t pathPos = line.find("<td><b>");
-            if (pathPos != string::npos) {
-                size_t end = line.find("</b>", pathPos);
-                if (end != string::npos) {
-                    string path = line.substr(pathPos + 7, end - (pathPos + 7));
-                    projectPaths.push_back(path);
+            if (hasHtmlExtension(filePath)) {
+                ifstream file(filePath);
+                if (!file.is_open()) {
+                    cerr << "Failed to open HTML file." << endl;
                     continue;
                 }
+
+                string line;
+                while (getline(file, line)) {
+                    size_t pathPos = line.find("<td><b>");
+                    if (pathPos != string::npos) {
+                        size_t end = line.find("</b>", pathPos);
+                        if (end != string::npos) {
+                            string path = line.substr(pathPos + 7, end - (pathPos + 7));
+                            projectPaths.push_back(path);
+                            continue;
+                        }
+                    }
+                    if (line.find(".c") != string::npos || line.find(".cpp") != string::npos || line.find(".h") != string::npos) {
+                        Violation v;
+                        v.filePath = line;
+                        v.line = 0;
+                        v.message = "(HTML Parsing Placeholder - real extraction needed)";
+                        v.severity = 1;
+                        violationsBySeverity[v.severity].push_back(v);
+                        total++;
+                    }
+                }
+                file.close();
             }
+            else {
+                XMLDocument doc;
+                if (doc.LoadFile(filePath.c_str()) != XML_SUCCESS) {
+                    cerr << "Failed to load XML file." << endl;
+                    continue;
+                }
 
-            // Try detecting violation table rows by finding .c/.cpp/.h and extracting basic data
-            if (line.find(".c") != string::npos || line.find(".cpp") != string::npos || line.find(".h") != string::npos) {
-                Violation v;
-                v.filePath = line;
-                v.line = 0;
-                v.message = "(HTML Parsing Placeholder - real extraction needed)";
-                v.severity = 1;
-                violationsBySeverity[v.severity].push_back(v);
-                total++;
-            }
-        }
-        file.close();
-    }
-    else {
-        XMLDocument doc;
-        if (doc.LoadFile(filePath.c_str()) != XML_SUCCESS) {
-            cerr << "Failed to load XML file." << endl;
-            return 1;
-        }
+                XMLElement* root = doc.RootElement();
+                if (!root) {
+                    cerr << "No root element in XML." << endl;
+                    continue;
+                }
 
-        XMLElement* root = doc.RootElement();
-        if (!root) {
-            cerr << "No root element in XML." << endl;
-            return 1;
-        }
+                XMLElement* codingStandardsElement = root->FirstChildElement("CodingStandards");
+                if (!codingStandardsElement) {
+                    cerr << "No <CodingStandards> element found." << endl;
+                    continue;
+                }
 
-        XMLElement* codingStandardsElement = root->FirstChildElement("CodingStandards");
-        if (!codingStandardsElement) {
-            cerr << "No <CodingStandards> element found." << endl;
-            return 1;
-        }
+                XMLElement* locations = root->FirstChildElement("Locations");
+                if (locations) {
+                    XMLElement* loc = locations->FirstChildElement("Loc");
+                    if (loc) {
+                        if (const char* proj = loc->Attribute("project")) projectName = proj;
+                        for (; loc; loc = loc->NextSiblingElement("Loc")) {
+                            const char* path = loc->Attribute("fsPath");
+                            if (path) projectPaths.push_back(path);
+                        }
+                    }
+                }
 
-        XMLElement* locations = root->FirstChildElement("Locations");
-        if (locations) {
-            XMLElement* loc = locations->FirstChildElement("Loc");
-            if (loc) {
-                if (const char* proj = loc->Attribute("project")) projectName = proj;
-                for (; loc; loc = loc->NextSiblingElement("Loc")) {
-                    const char* path = loc->Attribute("fsPath");
-                    if (path) projectPaths.push_back(path);
+                XMLElement* stdViols = codingStandardsElement->FirstChildElement("StdViols");
+                if (stdViols) {
+                    for (XMLElement* v = stdViols->FirstChildElement("StdViol"); v; v = v->NextSiblingElement("StdViol")) {
+                        Violation viol;
+                        viol.filePath = v->Attribute("locFile") ? v->Attribute("locFile") : "";
+                        viol.line = v->IntAttribute("ln", -1);
+                        viol.message = v->Attribute("msg") ? v->Attribute("msg") : "";
+                        viol.category = v->Attribute("cat") ? v->Attribute("cat") : "";
+                        viol.severity = v->IntAttribute("sev", 0);
+                        violationsBySeverity[viol.severity].push_back(viol);
+                        total++;
+                    }
                 }
             }
-        }
 
-        XMLElement* stdViols = codingStandardsElement->FirstChildElement("StdViols");
-        if (stdViols) {
-            for (XMLElement* v = stdViols->FirstChildElement("StdViol"); v; v = v->NextSiblingElement("StdViol")) {
-                Violation viol;
-                viol.filePath = v->Attribute("locFile") ? v->Attribute("locFile") : "";
-                viol.line = v->IntAttribute("ln", -1);
-                viol.message = v->Attribute("msg") ? v->Attribute("msg") : "";
-                viol.category = v->Attribute("cat") ? v->Attribute("cat") : "";
-                viol.severity = v->IntAttribute("sev", 0);
-                violationsBySeverity[viol.severity].push_back(viol);
-                total++;
+            time_t now = time(nullptr);
+            char timebuf[32];
+            strftime(timebuf, sizeof(timebuf), "%Y%m%d_%H%M%S", localtime(&now));
+            string htmlFilePath = projectName + "_report_" + timebuf + ".html";
+
+            ofstream html(htmlFilePath);
+            html << "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Parasoft Report</title><style>"
+                << "body { font-family: Arial; margin: 20px; }"
+                << ".severity { margin: 10px 0; font-weight: bold; padding: 10px; border-radius: 4px; color: #fff; }"
+                << ".severity-0 { background-color: #3498db; }"
+                << ".severity-1 { background-color: #2ecc71; }"
+                << ".severity-2 { background-color: #f39c12; }"
+                << ".severity-3 { background-color: #e67e22; }"
+                << ".severity-4 { background-color: #e74c3c; }"
+                << ".violation { margin-left: 20px; margin-bottom: 8px; }"
+                << ".header { font-size: 14px; margin-bottom: 20px; color: #555; }"
+                << "</style></head><body>";
+
+            html << "<h1>Parasoft Static Analysis Report - " << projectName << "</h1>";
+            html << "<div class='header'><strong>Project Files:</strong><ul>";
+            for (const auto& path : projectPaths) {
+                html << "<li>" << path << "</li>";
             }
+            html << "</ul></div>";
+
+            html << "<p>Total Violations: " << total << "</p>";
+
+            for (const auto& [sev, list] : violationsBySeverity) {
+                html << "<div class='severity severity-" << sev << "'>" << severityLabel(sev)
+                    << " Severity - " << list.size() << " violations</div>";
+                for (const auto& v : list) {
+                    html << "<div class='violation'>"
+                        << "<b>Location:</b> " << v.filePath << "<br>"
+                        << "<b>Line:</b> " << v.line << "<br>"
+                        << "<i>" << v.message << "</i></div>";
+                }
+            }
+
+            html << "</body></html>";
+            html.close();
+
+            cout << "Report written to: " << htmlFilePath << endl;
+            Sleep(100);
+            ShellExecuteA(NULL, "open", htmlFilePath.c_str(), NULL, NULL, SW_SHOWNORMAL);
+
         }
-    }
-
-    time_t now = time(nullptr);
-    char timebuf[32];
-    strftime(timebuf, sizeof(timebuf), "%Y%m%d_%H%M%S", localtime(&now));
-    string htmlFilePath = projectName + "_report_" + timebuf + ".html";
-
-    ofstream html(htmlFilePath);
-    html << "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Parasoft Report</title><style>"
-        << "body { font-family: Arial; margin: 20px; }"
-        << ".severity { margin: 10px 0; font-weight: bold; padding: 10px; border-radius: 4px; color: #fff; }"
-        << ".severity-0 { background-color: #3498db; }"
-        << ".severity-1 { background-color: #2ecc71; }"
-        << ".severity-2 { background-color: #f39c12; }"
-        << ".severity-3 { background-color: #e67e22; }"
-        << ".severity-4 { background-color: #e74c3c; }"
-        << ".violation { margin-left: 20px; margin-bottom: 8px; }"
-        << ".header { font-size: 14px; margin-bottom: 20px; color: #555; }"
-        << "</style></head><body>";
-
-    html << "<h1>Parasoft Static Analysis Report - " << projectName << "</h1>";
-    html << "<div class='header'><strong>Project Files:</strong><ul>";
-    for (const auto& path : projectPaths) {
-        html << "<li>" << path << "</li>";
-    }
-    html << "</ul></div>";
-
-    html << "<p>Total Violations: " << total << "</p>";
-
-    for (const auto& [sev, list] : violationsBySeverity) {
-        html << "<div class='severity severity-" << sev << "'>" << severityLabel(sev)
-            << " Severity - " << list.size() << " violations</div>";
-        for (const auto& v : list) {
-            html << "<div class='violation'>"
-                << "<b>Location:</b> " << v.filePath << "<br>"
-                << "<b>Line:</b> " << v.line << "<br>"
-                << "<i>" << v.message << "</i></div>";
+        catch (const std::exception& ex) {
+            cerr << "Unexpected error: " << ex.what() << endl;
         }
-    }
+        catch (...) {
+            cerr << "Unknown error occurred during report generation." << endl;
+        }
 
-    html << "</body></html>";
-    html.close();
+        cout << "\nWould you like to generate another report? (y = yes, q = quit): ";
+        getline(cin, choice);
 
-    cout << "Report written to: " << htmlFilePath << endl;
-    Sleep(100);
-    ShellExecuteA(NULL, "open", htmlFilePath.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    } while (choice == "y" || choice == "Y");
+
+    cout << "Exiting Parasoft Report Parser. Goodbye!" << endl;
     return 0;
 }
