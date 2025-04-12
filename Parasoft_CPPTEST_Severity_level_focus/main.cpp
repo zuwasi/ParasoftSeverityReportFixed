@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <shellapi.h>
+#include <iomanip> // Include for std::put_time
 
 #undef XMLDocument
 
@@ -79,10 +80,21 @@ int main() {
             string filePath = filename;
             cout << "Selected report: " << filePath << endl;
 
+            // Get current date and time for the headline
+            time_t now = time(nullptr);
+            char timebuf[32];
+            strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+            // Get custom headline from user
+            string customHeadline;
+            cout << "Enter a custom headline for the report (leave empty to use default): ";
+            getline(cin, customHeadline);
+
             string projectName = "UnknownProject";
             vector<string> projectPaths;
             map<int, vector<Violation>> violationsBySeverity;
-            int total = 0;
+            int totalViolations = 0;
+            set<string> activeRules;
 
             if (hasHtmlExtension(filePath)) {
                 ifstream file(filePath);
@@ -116,7 +128,8 @@ int main() {
                         v.filePath = filePath;
                         v.severity = 1; // Placeholder; real severity parsing from HTML can be improved
                         violationsBySeverity[v.severity].push_back(v);
-                        total++;
+                        totalViolations++;
+                        activeRules.insert(v.ruleCode);
                     }
                 }
                 file.close();
@@ -185,16 +198,40 @@ int main() {
                         }
                         viol.severity = v->IntAttribute("sev", 0);
                         violationsBySeverity[viol.severity].push_back(viol);
-                        total++;
+                        totalViolations++;
+                        activeRules.insert(viol.ruleCode);
                     }
                 }
             }
 
-            time_t now = time(nullptr);
-            char timebuf[32];
-            strftime(timebuf, sizeof(timebuf), "%Y%m%d_%H%M%S", localtime(&now));
-            string htmlFilePath = projectName + "_report_" + timebuf + ".html";
+            // Count suppressions (assuming you have a way to track this)
+            int suppressionsCount = 0; // Update this based on your logic
 
+            // Prompt user for save location
+            char saveFileName[MAX_PATH] = "";
+            OPENFILENAMEA saveOfn;
+            ZeroMemory(&saveOfn, sizeof(saveOfn));
+            saveOfn.lStructSize = sizeof(saveOfn);
+            saveOfn.hwndOwner = nullptr;
+            saveOfn.lpstrFilter = "HTML Files (*.html)\0*.html\0All Files (*.*)\0*.*\0";
+            saveOfn.lpstrFile = saveFileName;
+            saveOfn.nMaxFile = MAX_PATH;
+            saveOfn.lpstrTitle = "Save Report As";
+            saveOfn.Flags = OFN_OVERWRITEPROMPT;
+
+            if (!GetSaveFileNameA(&saveOfn)) {
+                cerr << "No file selected or dialog cancelled." << endl;
+                continue;
+            }
+
+            string htmlFilePath = saveFileName;
+
+            // Ensure the file has .html extension
+            if (htmlFilePath.substr(htmlFilePath.find_last_of('.') + 1) != "html") {
+                htmlFilePath += ".html";
+            }
+
+            // Generate report
             ofstream html(htmlFilePath);
             html << "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Parasoft Report</title><style>"
                 << "body { font-family: Arial; margin: 20px; }"
@@ -208,14 +245,33 @@ int main() {
                 << ".header { font-size: 14px; margin-bottom: 20px; color: #555; }"
                 << "</style></head><body>";
 
-            html << "<h1>Parasoft Static Analysis Report - " << projectName << "</h1>";
+            // Use custom headline if provided, otherwise use default
+            if (!customHeadline.empty()) {
+                html << "<h1>" << customHeadline << " - " << timebuf << "</h1>";
+            }
+            else {
+                html << "<h1>Parasoft Static Analysis Report - " << projectName << " - " << timebuf << "</h1>";
+            }
+
             html << "<div class='header'><strong>Project Files:</strong><ul>";
             for (const auto& path : projectPaths) {
                 html << "<li>" << path << "</li>";
             }
             html << "</ul></div>";
 
-            html << "<p>Total Violations: " << total << "</p>";
+            html << "<p>Total Violations: " << totalViolations << " (";
+            for (const auto& [sev, list] : violationsBySeverity) {
+                html << severityLabel(sev) << ": " << list.size() << (sev < violationsBySeverity.size() - 1 ? ", " : "");
+            }
+            html << ")</p>";
+
+            html << "<p>Suppressions: " << suppressionsCount << "</p>";
+
+            html << "<p>Active Rules:</p><ul>";
+            for (const auto& rule : activeRules) {
+                html << "<li>" << rule << "</li>";
+            }
+            html << "</ul>";
 
             for (const auto& [sev, list] : violationsBySeverity) {
                 html << "<div class='severity severity-" << sev << "'>" << severityLabel(sev)
