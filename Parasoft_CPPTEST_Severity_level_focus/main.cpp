@@ -262,10 +262,16 @@ int main() {
             html << "</ul></div>";
 
             html << "<p>Total Violations: " << totalViolations << " (";
+            bool first = true; // Flag to handle the first entry without a leading comma
             for (const auto& [sev, list] : violationsBySeverity) {
-                html << severityLabel(sev) << ": " << list.size() << (sev < violationsBySeverity.size() - 1 ? ", " : "");
+                if (!first) {
+                    html << ", "; // Add a comma and space before each entry except the first
+                }
+                html << severityLabel(sev) << ": " << list.size();
+                first = false; // After the first entry, set the flag to false
             }
             html << ")</p>";
+
 
             html << "<p>Suppressions: " << suppressionsCount << "</p>";
 
