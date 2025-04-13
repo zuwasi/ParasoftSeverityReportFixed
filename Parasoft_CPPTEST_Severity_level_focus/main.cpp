@@ -1,4 +1,8 @@
 ﻿//last general version before we move to the FDA version 
+//TODO CREATE A NEW brunch  OF THIS FILE FOR THE FDA VERSION
+//TODO the FDA version should contain the K510 information as a user input and print it out in the report
+//TODO compare violantion to previous version and add the FDA version
+//TODO add a bar chart for compareing progress for FDA 
 
 #define NOMINMAX
 #define XMLDocument WindowsXMLDocument
