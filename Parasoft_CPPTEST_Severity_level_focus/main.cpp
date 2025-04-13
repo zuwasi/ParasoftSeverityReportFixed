@@ -1,4 +1,6 @@
-﻿#define NOMINMAX
+﻿//last general version before we move to the FDA version 
+
+#define NOMINMAX
 #define XMLDocument WindowsXMLDocument
 
 #include <windows.h>
